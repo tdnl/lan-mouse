@@ -44,9 +44,6 @@ Most current desktop environments and operating systems are fully supported, thi
 > [!Important]
 > - **X11** currently only has support for input emulation, i.e. can only be used on the receiving end.
 >
-> - **Sway / wlroots**: Wlroots based compositors without libei support on the receiving end currently do not handle modifier events on the client side.
-> This results in CTRL / SHIFT / ALT / SUPER keys not working with a sending device that is NOT using the `layer-shell` backend
->
 > - **Wayfire**: If you are using [Wayfire](https://github.com/WayfireWM/wayfire), make sure to use a recent version (must be newer than October 23rd) and **add `shortcuts-inhibit` to the list of plugins in your wayfire config!**
 > Otherwise input capture will not work.
 >
@@ -234,7 +231,7 @@ scripts/copy-macos-dylib.sh
     <summary>Ubuntu and derivatives</summary>
 
 ```sh
-sudo apt install libadwaita-1-dev libgtk-4-dev libx11-dev libxtst-dev
+sudo apt install libadwaita-1-dev libgtk-4-dev libx11-dev libxtst-dev libxkbcommon-dev
 ```
 </details>
 
@@ -242,7 +239,7 @@ sudo apt install libadwaita-1-dev libgtk-4-dev libx11-dev libxtst-dev
     <summary>Arch and derivatives</summary>
 
 ```sh
-sudo pacman -S libadwaita gtk libx11 libxtst
+sudo pacman -S libadwaita gtk libx11 libxtst libxkbcommon
 ```
 </details>
 
@@ -250,7 +247,7 @@ sudo pacman -S libadwaita gtk libx11 libxtst
     <summary>Fedora and derivatives</summary>
 
 ```sh
-sudo dnf install libadwaita-devel libXtst-devel libX11-devel
+sudo dnf install libadwaita-devel libXtst-devel libX11-devel libxkbcommon-devel
 ```
 </details>
 <details>

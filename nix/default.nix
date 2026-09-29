@@ -7,6 +7,7 @@
   gtk4,
   libadwaita,
   libXtst,
+  libxkbcommon,
   wrapGAppsHook4,
   librsvg,
   git,
@@ -34,6 +35,7 @@ rustPlatform.buildRustPackage {
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     libX11
     libXtst
+    libxkbcommon
   ];
 
   src = builtins.path {

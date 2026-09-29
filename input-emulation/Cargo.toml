@@ -34,7 +34,6 @@ tokio = { version = "1.32.0", features = [
 once_cell = "1.19.0"
 
 [target.'cfg(all(unix, not(target_os="macos")))'.dependencies]
-bitflags = "2.6.0"
 wayland-client = { version = "0.31.1", optional = true }
 wayland-protocols = { version = "0.32.1", features = [
     "client",
@@ -47,6 +46,7 @@ wayland-protocols-wlr = { version = "0.3.1", features = [
 wayland-protocols-misc = { version = "0.3.1", features = [
     "client",
 ], optional = true }
+xkbcommon = { version = "0.9", optional = true }
 x11 = { version = "2.21.0", features = ["xlib", "xtest"], optional = true }
 ashpd = { version = "0.13.9", default-features = false, features = [
     "remote_desktop",
@@ -80,6 +80,7 @@ wlroots = [
     "dep:wayland-protocols",
     "dep:wayland-protocols-wlr",
     "dep:wayland-protocols-misc",
+    "dep:xkbcommon",
 ]
 x11 = ["dep:x11"]
 remote_desktop_portal = ["dep:ashpd"]
