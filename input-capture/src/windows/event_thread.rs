@@ -8,7 +8,7 @@ use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::mpsc::error::TrySendError;
-use windows::Win32::Foundation::{FALSE, HWND, LPARAM, LRESULT, RECT, WPARAM};
+use windows::Win32::Foundation::{FALSE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::{
     DEVMODEW, DISPLAY_DEVICE_ATTACHED_TO_DESKTOP, DISPLAY_DEVICEW, ENUM_CURRENT_SETTINGS,
     EnumDisplayDevicesW, EnumDisplaySettingsW,
@@ -19,11 +19,12 @@ use windows::core::{PCWSTR, w};
 
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, CreateWindowExW, DispatchMessageW, EDD_GET_DEVICE_INTERFACE_NAME, GetMessageW,
-    HOOKPROC, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, MSG, MSLLHOOKSTRUCT, PostThreadMessageW,
-    RegisterClassW, SetWindowsHookExW, TranslateMessage, WH_KEYBOARD_LL, WH_MOUSE_LL, WINDOW_STYLE,
-    WM_DISPLAYCHANGE, WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDOWN,
-    WM_MBUTTONUP, WM_MOUSEHWHEEL, WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_RBUTTONDOWN, WM_RBUTTONUP,
-    WM_SYSKEYDOWN, WM_SYSKEYUP, WM_USER, WM_XBUTTONDOWN, WM_XBUTTONUP, WNDCLASSW, WNDPROC,
+    GetPhysicalCursorPos, HOOKPROC, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, MSG, MSLLHOOKSTRUCT,
+    PostThreadMessageW, RegisterClassW, SetPhysicalCursorPos, SetWindowsHookExW, TranslateMessage,
+    WH_KEYBOARD_LL, WH_MOUSE_LL, WINDOW_STYLE, WM_DISPLAYCHANGE, WM_KEYDOWN, WM_KEYUP,
+    WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEHWHEEL, WM_MOUSEMOVE,
+    WM_MOUSEWHEEL, WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SYSKEYDOWN, WM_SYSKEYUP, WM_USER,
+    WM_XBUTTONDOWN, WM_XBUTTONUP, WNDCLASSW, WNDPROC,
 };
 
 use input_event::{
@@ -328,8 +329,31 @@ unsafe extern "system" fn mouse_proc(ncode: i32, wparam: WPARAM, lparam: LPARAM)
     /* notify mainthread (motion is deferred, other events dropped if sending too fast) */
     send_pointer_event(pos, pointer_event);
 
+    if wparam.0 == WM_MOUSEMOVE as usize {
+        repin_cursor();
+    }
+
     /* don't pass event to applications */
     LRESULT(1)
+}
+
+/// Moves the cursor back to the entry point if it is no longer there.
+///
+/// Motion is computed relative to the entry point, which is only correct
+/// while the cursor stays parked there. The cursor can still move while a
+/// client is active (e.g. after locking and unlocking Windows), which would
+/// otherwise add a permanent offset to every following motion event.
+fn repin_cursor() {
+    let (ex, ey) = ENTRY_POINT.get();
+    let mut pos = POINT::default();
+    /* physical coordinates, like the hook's `pt`, regardless of DPI awareness */
+    if unsafe { GetPhysicalCursorPos(&mut pos) }.is_err() {
+        return;
+    }
+    if (pos.x, pos.y) != (ex, ey) {
+        log::trace!("cursor escaped to ({}, {}), moving it back", pos.x, pos.y);
+        let _ = unsafe { SetPhysicalCursorPos(ex, ey) };
+    }
 }
 
 /// Sends a pointer event without blocking the hook.
